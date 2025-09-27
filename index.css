@@ -50,6 +50,26 @@ body.cursor-none * {
     --tw-ring-color: #c084fc;
 }
 
+.item-card.group-item.selected {
+    border: 2px dashed #3b82f6; /* blue-500 */
+    background-color: rgba(59, 130, 246, 0.05);
+}
+
+.item-card.is-group-child-of-selection {
+    --tw-ring-color: #93c5fd; /* blue-300 */
+    --tw-ring-offset-shadow: 0 0 #0000;
+    --tw-ring-shadow: 0 0 #0000;
+    --tw-shadow: 0 0 #0000;
+    --tw-shadow-colored: 0 0 #0000;
+    box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+    ring-width: 1px;
+    ring-color: var(--tw-ring-color);
+    ring-offset-shadow: var(--tw-ring-offset-shadow);
+    box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+    border-color: var(--tw-ring-color);
+}
+
+
 .item-card.sticky-note {
     box-shadow: 0 4px 6px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.08);
     transform: rotate(-1.5deg);
@@ -191,15 +211,15 @@ body.cursor-none * {
 .layer-item {
     display: flex;
     align-items: center;
-    padding: 6px 8px;
+    justify-content: space-between;
+    padding: 6px 8px 6px 0; /* right padding is handled by controls */
     border-radius: 4px;
     cursor: pointer;
     user-select: none;
     font-size: 13px;
-    gap: 8px;
     transition: background-color 0.1s;
+    min-height: 28px;
 }
-
 .layer-item:hover {
     background-color: #4a4a4a;
 }
@@ -208,15 +228,96 @@ body.cursor-none * {
     background-color: #007aff;
     color: white;
 }
-
-.layer-item.dragging {
-    opacity: 0.5;
-    background-color: #555;
+.layer-item.selected:hover {
+    background-color: #0073e6;
 }
 
-.layer-item .layer-icon {
+.layer-item.disabled {
+    color: #888;
+}
+
+.layer-item .layer-item-content {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    overflow: hidden; /* To truncate long names */
+}
+.layer-item .layer-item-content span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+.layer-item .expander {
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: #a0a0a0;
+    cursor: pointer;
+    padding: 0;
+}
+.layer-item .expander svg {
+    transition: transform 0.1s ease-in-out;
+}
+.layer-item .expander .expanded {
+    transform: rotate(90deg);
+}
+
+.layer-item .expander-placeholder {
+    width: 16px;
     flex-shrink: 0;
 }
+
+.layer-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    color: #c7c7c7;
+}
+.layer-item.selected .layer-icon {
+    color: white;
+}
+
+.layer-item-controls {
+    display: none;
+    align-items: center;
+    gap: 4px;
+    padding-right: 4px;
+}
+.layer-item:hover .layer-item-controls {
+    display: flex;
+}
+.layer-item-controls button {
+    background: none;
+    border: none;
+    color: #aaa;
+    cursor: pointer;
+    padding: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+}
+.layer-item-controls button:hover {
+    color: white;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+.layer-item.selected .layer-item-controls {
+    display: flex;
+    color: white;
+}
+.layer-item.selected .layer-item-controls button {
+    color: #eee;
+}
+.layer-item.selected .layer-item-controls button:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
 
 /* --- Toolbar & Shape Picker --- */
 .toolbar, .shape-picker {
