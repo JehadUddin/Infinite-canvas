@@ -504,3 +504,41 @@ body.cursor-none * {
     border: none;
     background: none;
 }
+
+/* --- Layer Panel Context Menu --- */
+.context-menu-container {
+    position: fixed;
+    z-index: 2000;
+    width: 200px;
+    background-color: #3e3e3e;
+    border-radius: 6px;
+    border: 1px solid #555;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    padding: 4px;
+    color: #e0e0e0;
+}
+.context-menu-item {
+    background: none;
+    border: none;
+    color: inherit;
+    width: 100%;
+    text-align: left;
+    padding: 6px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+}
+.context-menu-item:hover {
+    background-color: #007aff;
+    color: white;
+}
+.context-menu-item:disabled {
+    color: #888;
+    cursor: not-allowed;
+    background-color: transparent;
+}
+.context-menu-separator {
+    height: 1px;
+    background-color: #555;
+    margin: 4px 0;
+}

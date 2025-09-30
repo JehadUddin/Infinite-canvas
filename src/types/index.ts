@@ -63,6 +63,7 @@ export type Command =
   | { type: 'GROUP'; data: { createdGroup: Item, updatedChildren: {id: string, oldParentId?: string}[] } }
   | { type: 'UNGROUP'; data: { removedGroup: Item, updatedChildren: {id:string, oldParentId?: string}[] } }
   | { type: 'UPDATE_BATCH'; data: { oldItems: Item[]; newItems: Item[] } }
+  | { type: 'FRAME_SELECTION'; data: { createdFrame: Item, updatedChildren: {id: string, oldParentId?: string}[] } }
   | { type: 'UPDATE_PAGE'; data: { pageId: string, from: Partial<Page>, to: Partial<Page> } };
 
 export type Handle = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'top' | 'bottom' | 'left' | 'right';

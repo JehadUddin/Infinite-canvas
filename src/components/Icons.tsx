@@ -27,6 +27,7 @@ export const CrosshairIcon = () => (
 export const PlusIcon = ({...props}) => <svg {...props} viewBox="0 0 24 24"><path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"></path></svg>;
 export const CheckIcon = ({...props}) => <svg {...props} viewBox="0 0 24 24"><path fill="currentColor" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"></path></svg>;
 export const TrashIcon = ({...props}) => <svg {...props} viewBox="0 0 24 24"><path fill="currentColor" d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"></path></svg>
+export const DeleteIcon = ({className = ''}) => <svg className={className} viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"></path></svg>
 
 export const FrameIcon = ({className = ''}) => <svg width="24" height="24" viewBox="0 0 24 24" className={className}><path fill="currentColor" d="M3 3h18v2H3V3m0 4h2v10H3V7m4 0h10v2H7V7m0 4h10v2H7v-2m0 4h10v2H7v-2m14-8h2v10h-2V7M3 19h18v2H3v-2Z"/></svg>
 export const StickyNoteIcon = ({className = ''}) => <svg width="24" height="24" viewBox="0 0 24 24" className={className}><path fill="currentColor" d="M15.54 3.5L19 6.96V20.5H5.5V3.5h10.04M15.54 2H5.5C4.67 2 4 2.67 4 3.5v17c0 .83.67 1.5 1.5 1.5h13c.83 0 1.5-.67 1.5-1.5V6.25L15.54 2m-8.08 15h9.08v1.5H7.46v-1.5m0-4.5h9.08v1.5H7.46v-1.5m0-4.5h6.08v1.5H7.46v-1.5Z"/></svg>

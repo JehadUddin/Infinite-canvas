@@ -40,9 +40,10 @@ interface LayerNodeProps {
     onTextChange: (itemId: string, newText: string) => void;
     onCommitText: (id: string) => void;
     onCancelEditing: (id: string) => void;
+    onContextMenu: (e: React.MouseEvent, itemId: string) => void;
 }
 
-const LayerNode = memo(({ itemId, itemMap, depth, selectedItemIds, expandedIds, onToggleExpand, onSelectionChange, onHoverChange, onToggleVisibility, onToggleLock, editingId, onStartEditing, onTextChange, onCommitText, onCancelEditing }: LayerNodeProps) => {
+const LayerNode = memo(({ itemId, itemMap, depth, selectedItemIds, expandedIds, onToggleExpand, onSelectionChange, onHoverChange, onToggleVisibility, onToggleLock, editingId, onStartEditing, onTextChange, onCommitText, onCancelEditing, onContextMenu }: LayerNodeProps) => {
     const item = itemMap.get(itemId);
     if (!item) return null;
 
@@ -80,6 +81,7 @@ const LayerNode = memo(({ itemId, itemMap, depth, selectedItemIds, expandedIds, 
             <div
                 className={layerClasses}
                 onClick={(e) => onSelectionChange(item.id, e.shiftKey, e.metaKey || e.ctrlKey)}
+                onContextMenu={(e) => onContextMenu(e, item.id)}
                 onMouseEnter={() => onHoverChange(item.id)}
                 onMouseLeave={() => onHoverChange(null)}
                 style={{ paddingLeft: `${depth * 16 + 8}px` }}
@@ -147,6 +149,7 @@ const LayerNode = memo(({ itemId, itemMap, depth, selectedItemIds, expandedIds, 
                             onTextChange={onTextChange}
                             onCommitText={onCommitText}
                             onCancelEditing={onCancelEditing}
+                            onContextMenu={onContextMenu}
                         />
                     ))}
                 </div>
@@ -154,6 +157,71 @@ const LayerNode = memo(({ itemId, itemMap, depth, selectedItemIds, expandedIds, 
         </>
     );
 });
+
+// FIX: Use a discriminated union for context menu items to ensure type safety.
+type ContextMenuActionItem = {
+    label: string;
+    action: () => void;
+    disabled?: boolean;
+    isSeparator?: false | undefined;
+};
+
+type ContextMenuSeparatorItem = {
+    isSeparator: true;
+};
+
+type ContextMenuItem = ContextMenuActionItem | ContextMenuSeparatorItem;
+
+interface ContextMenuProps {
+    x: number;
+    y: number;
+    onClose: () => void;
+    actions: ContextMenuItem[];
+}
+
+const ContextMenu = ({ x, y, onClose, actions }: ContextMenuProps) => {
+    const menuRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+                onClose();
+            }
+        };
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                onClose();
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        document.addEventListener('keydown', handleKeyDown);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [onClose]);
+
+    return (
+        <div ref={menuRef} className="context-menu-container" style={{ top: y, left: x }}>
+            {actions.map((item, index) => {
+                if (item.isSeparator) {
+                    return <div key={index} className="context-menu-separator" />;
+                }
+                return (
+                    <button
+                        key={index}
+                        className="context-menu-item"
+                        onClick={() => { item.action(); onClose(); }}
+                        disabled={item.disabled}
+                    >
+                        {item.label}
+                    </button>
+                );
+            })}
+        </div>
+    );
+};
+
 
 interface LayersPanelProps {
     pages: Page[];
@@ -170,9 +238,13 @@ interface LayersPanelProps {
     onToggleLock: (id: string) => void;
     onTextChange: (itemId: string, newText: string) => void;
     onTextCommit: (itemId: string, from: string, to: string) => void;
+    onGroup: () => void;
+    onUngroup: () => void;
+    onFrameSelection: () => void;
+    onReorder: (direction: 'front' | 'back' | 'forward' | 'backward') => void;
 }
 
-export const LayersPanel = memo(({ pages, activePageId, items, selectedItemIds, onAddPage, onSwitchPage, onDeletePage, onRenamePage, onSelectionChange, onHoverChange, onToggleVisibility, onToggleLock, onTextChange, onTextCommit }: LayersPanelProps) => {
+export const LayersPanel = memo(({ pages, activePageId, items, selectedItemIds, onAddPage, onSwitchPage, onDeletePage, onRenamePage, onSelectionChange, onHoverChange, onToggleVisibility, onToggleLock, onTextChange, onTextCommit, onGroup, onUngroup, onFrameSelection, onReorder }: LayersPanelProps) => {
     const [expandedLayerIds, setExpandedLayerIds] = useState<Set<string>>(new Set());
     const [editingLayerId, setEditingLayerId] = useState<string | null>(null);
     const layerTextOnEdit = useRef('');
@@ -180,9 +252,13 @@ export const LayersPanel = memo(({ pages, activePageId, items, selectedItemIds, 
     const [editingPageId, setEditingPageId] = useState<string | null>(null);
     const pageNameOnEdit = useRef('');
     const [isPagesExpanded, setIsPagesExpanded] = useState(true);
+    const [contextMenu, setContextMenu] = useState<{ x: number; y: number; } | null>(null);
+
 
     const itemMap = useMemo(() => new Map(items.map(i => [i.id, i])), [items]);
     const rootItemIds = useMemo(() => items.filter(i => !i.parentId).map(i => i.id), [items]);
+    const selectedItems = useMemo(() => selectedItemIds.map(id => itemMap.get(id)).filter((i): i is Item => !!i), [selectedItemIds, itemMap]);
+
 
     // Layer editing handlers
     const handleStartLayerEditing = useCallback((id: string, currentText: string) => { setEditingLayerId(id); layerTextOnEdit.current = currentText; }, []);
@@ -204,7 +280,37 @@ export const LayersPanel = memo(({ pages, activePageId, items, selectedItemIds, 
         if (e.key === 'Escape') { onRenamePage(page.id, pageNameOnEdit.current); setEditingPageId(null); }
     };
 
+    const handleContextMenu = useCallback((e: React.MouseEvent, itemId: string) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!selectedItemIds.includes(itemId)) {
+            onSelectionChange(itemId, false, false);
+        }
+        setContextMenu({ x: e.clientX, y: e.clientY });
+    }, [selectedItemIds, onSelectionChange]);
+
+
     const selectedIdsSet = useMemo(() => new Set(selectedItemIds), [selectedItemIds]);
+
+    const contextMenuActions = useMemo(() => {
+        const canGroup = selectedItems.length > 1;
+        const canUngroup = selectedItems.length === 1 && selectedItems[0]?.type === 'group';
+        const isAnythingSelected = selectedItems.length > 0;
+        
+        return [
+            { label: 'Frame selection', action: onFrameSelection, disabled: !isAnythingSelected },
+            { label: 'Group', action: onGroup, disabled: !canGroup },
+            { label: 'Ungroup', action: onUngroup, disabled: !canUngroup },
+            { isSeparator: true },
+            { label: 'Bring to front', action: () => onReorder('front'), disabled: !isAnythingSelected },
+            { label: 'Bring forward', action: () => onReorder('forward'), disabled: !isAnythingSelected },
+            { label: 'Send backward', action: () => onReorder('backward'), disabled: !isAnythingSelected },
+            { label: 'Send to back', action: () => onReorder('back'), disabled: !isAnythingSelected },
+            { isSeparator: true },
+            { label: 'Show/Hide', action: () => onToggleVisibility(selectedItemIds[0]), disabled: !isAnythingSelected },
+            { label: 'Lock/Unlock', action: () => onToggleLock(selectedItemIds[0]), disabled: !isAnythingSelected },
+        ];
+    }, [selectedItems, onFrameSelection, onGroup, onUngroup, onReorder, onToggleVisibility, onToggleLock, selectedItemIds]);
 
     return (
         <div className="layers-panel">
@@ -268,6 +374,7 @@ export const LayersPanel = memo(({ pages, activePageId, items, selectedItemIds, 
                             onTextChange={onTextChange}
                             onCommitText={handleCommitLayerText}
                             onCancelEditing={handleCancelLayerEditing}
+                            onContextMenu={handleContextMenu}
                         />
                     ))}
                 </div>
@@ -278,6 +385,7 @@ export const LayersPanel = memo(({ pages, activePageId, items, selectedItemIds, 
                 <span>•</span>
                 <span>Feedback</span>
             </div>
+            {contextMenu && <ContextMenu x={contextMenu.x} y={contextMenu.y} onClose={() => setContextMenu(null)} actions={contextMenuActions} />}
         </div>
     );
 });

@@ -1,15 +1,17 @@
 import React, { useState, useCallback, useMemo, ChangeEvent, useEffect } from 'react';
 import { Item, Page } from '../types';
+import { DeleteIcon } from './Icons';
 
 interface ControlPanelProps {
     selectedItems: Item[];
     activePage: Page;
     onUpdateItems: (itemIds: string[], updates: Partial<Item>) => void;
     onUpdatePage: (pageId: string, updates: Partial<Page>) => void;
+    onDeleteItems: () => void;
 }
 
-const CollapsibleSection = ({ title, children }: { title: string, children: React.ReactNode }) => {
-    const [isOpen, setIsOpen] = useState(true);
+const CollapsibleSection = ({ title, children, defaultOpen = true }: { title: string, children: React.ReactNode, defaultOpen?: boolean }) => {
+    const [isOpen, setIsOpen] = useState(defaultOpen);
     return (
         <div className="cp-section">
             <div className="cp-section-header" onClick={() => setIsOpen(!isOpen)}>
@@ -87,7 +89,7 @@ const ColorInput = ({ label, value, onUpdate }: { label: string, value: string, 
     );
 };
 
-export const ControlPanel = ({ selectedItems, activePage, onUpdateItems, onUpdatePage }: ControlPanelProps) => {
+export const ControlPanel = ({ selectedItems, activePage, onUpdateItems, onUpdatePage, onDeleteItems }: ControlPanelProps) => {
     
     const getCommonValue = useCallback((key: keyof Item, defaultValue?: any) => {
         if (selectedItems.length === 0) return undefined;
@@ -134,6 +136,15 @@ export const ControlPanel = ({ selectedItems, activePage, onUpdateItems, onUpdat
 
     return (
         <div className="control-panel">
+            <CollapsibleSection title="Actions" defaultOpen={false}>
+                <button
+                    onClick={onDeleteItems}
+                    className="w-full flex items-center justify-center gap-2 p-2 rounded-md bg-red-500/20 text-red-300 hover:bg-red-500/40"
+                >
+                    <DeleteIcon className="w-4 h-4"/>
+                    Delete
+                </button>
+            </CollapsibleSection>
             <CollapsibleSection title="Layout">
                 <div className="cp-row-grid">
                     <NumberInput label="x" value={commonX as number | 'mixed'} onChange={handleUpdate} />
